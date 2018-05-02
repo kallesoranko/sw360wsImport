@@ -1,6 +1,9 @@
 /*
- * Copyright (c) Verifa Oy, 2018.
+ * Copyright (c) Bosch Software Innovations GmbH 2017.
+ * With modifications by Verifa Oy, 2018.
  * Part of the SW360 Portal Project.
+ *
+ * SPDX-License-Identifier: EPL-1.0
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -14,8 +17,8 @@ import com.google.common.collect.ImmutableSet;
 import io.verifa.sw360.ws.thrift.helper.ProjectImportError;
 import io.verifa.sw360.ws.thrift.helper.ProjectImportResult;
 import io.verifa.sw360.ws.domain.WsProject;
-import io.verifa.sw360.ws.entitytranslation.WsComponentToSw360ComponentTranslator;
-import io.verifa.sw360.ws.entitytranslation.WsComponentToSw360ReleaseTranslator;
+import io.verifa.sw360.ws.entitytranslation.WsLibraryToSw360ComponentTranslator;
+import io.verifa.sw360.ws.entitytranslation.WsLibraryToSw360ReleaseTranslator;
 import io.verifa.sw360.ws.entitytranslation.WsLicenseToSw360LicenseTranslator;
 import io.verifa.sw360.ws.entitytranslation.WsProjectToSw360ProjectTranslator;
 import io.verifa.sw360.ws.entitytranslation.helper.ReleaseRelation;
@@ -45,8 +48,8 @@ public class ThriftUploader {
 
     private static final Logger logger = Logger.getLogger(ThriftUploader.class);
 
-    private final WsComponentToSw360ComponentTranslator componentToComponentTranslator = new WsComponentToSw360ComponentTranslator();
-    private final WsComponentToSw360ReleaseTranslator componentToReleaseTranslator = new WsComponentToSw360ReleaseTranslator();
+    private final WsLibraryToSw360ComponentTranslator componentToComponentTranslator = new WsLibraryToSw360ComponentTranslator();
+    private final WsLibraryToSw360ReleaseTranslator componentToReleaseTranslator = new WsLibraryToSw360ReleaseTranslator();
     private final WsLicenseToSw360LicenseTranslator licenseToLicenseTranslator = new WsLicenseToSw360LicenseTranslator();
     private final WsProjectToSw360ProjectTranslator projectToProjectTranslator = new WsProjectToSw360ProjectTranslator();
 
@@ -172,7 +175,7 @@ public class ThriftUploader {
     private String getOrCreateComponent(io.verifa.sw360.ws.domain.WsLibrary wsLibrary, User sw360user) {
         logger.info("Try to import whitesource Component: " + wsLibrary.getName());
 
-        String componentVersion = isNullOrEmpty(wsLibrary.getVersion()) ? WsComponentToSw360ReleaseTranslator.unknownVersionString : wsLibrary.getVersion();
+        String componentVersion = isNullOrEmpty(wsLibrary.getVersion()) ? WsLibraryToSw360ReleaseTranslator.unknownVersionString : wsLibrary.getVersion();
         Optional<String> potentialReleaseId = searchExistingEntityId(thriftExchange.searchReleaseByNameAndVersion(wsLibrary.getName(), componentVersion),
                 Release::getId,
                 "Library",

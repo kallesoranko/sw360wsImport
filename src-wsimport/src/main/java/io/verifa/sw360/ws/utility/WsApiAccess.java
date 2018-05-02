@@ -9,7 +9,7 @@
 
 package io.verifa.sw360.ws.utility;
 
-import org.eclipse.sw360.datahandler.thrift.projectimport.WhitesourceCredentials;
+import org.eclipse.sw360.datahandler.thrift.projectimport.WSCredentials;
 
 /**
  * @author: ksoranko@verifa.io
@@ -19,7 +19,7 @@ public class WsApiAccess {
     private final String serverUrl;
     private final String orgToken;
 
-    public WsApiAccess(WhitesourceCredentials wsCredentials) {
+    public WsApiAccess(WSCredentials wsCredentials) {
         this.serverUrl = wsCredentials.getServerUrl();
         this.orgToken = wsCredentials.getToken();
     }

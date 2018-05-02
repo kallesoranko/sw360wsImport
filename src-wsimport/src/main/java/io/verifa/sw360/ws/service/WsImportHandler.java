@@ -20,7 +20,7 @@ import org.eclipse.sw360.datahandler.thrift.importstatus.ImportStatus;
 import org.eclipse.sw360.datahandler.thrift.projectimport.ProjectImportService;
 import org.eclipse.sw360.datahandler.thrift.projectimport.RemoteCredentials;
 
-import org.eclipse.sw360.datahandler.thrift.projectimport.WhitesourceCredentials;
+import org.eclipse.sw360.datahandler.thrift.projectimport.WSCredentials;
 import org.eclipse.sw360.datahandler.thrift.projects.Project;
 import org.eclipse.sw360.datahandler.thrift.users.User;
 
@@ -34,13 +34,13 @@ public class WsImportHandler implements ProjectImportService.Iface {
 
     private static final Logger log = Logger.getLogger(WsImportHandler.class);
 
-    private static WsApiAccess getWsApiAccessWrapper(WhitesourceCredentials wsCredentials) {
+    private static WsApiAccess getWsApiAccessWrapper(WSCredentials wsCredentials) {
         log.info("server: " + wsCredentials.getServerUrl());
         return new WsApiAccess(wsCredentials);
     }
 
     @Override
-    public synchronized ImportStatus importWsDatasources(List<String> projectTokens, User user, WhitesourceCredentials wsCredentials) throws TException {
+    public synchronized ImportStatus importWsDatasources(List<String> projectTokens, User user, WSCredentials wsCredentials) throws TException {
         log.info("wsimport: importWsDatasources method");
         WsApiAccess wsApiAccess = getWsApiAccessWrapper(wsCredentials);
         ThriftUploader thriftUploader = new ThriftUploader(wsApiAccess);

@@ -27,6 +27,7 @@ import org.eclipse.sw360.datahandler.thrift.projectimport.WSCredentials;
 import org.eclipse.sw360.datahandler.thrift.projects.Project;
 import org.eclipse.sw360.datahandler.thrift.users.User;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -35,28 +36,27 @@ import java.util.List;
  */
 public class WsImportHandler implements ProjectImportService.Iface {
 
-    private static final Logger log = Logger.getLogger(WsImportHandler.class);
+    private static final Logger LOGGER = Logger.getLogger(WsImportHandler.class);
 
     private static WsApiAccess getWsApiAccessWrapper(WSCredentials wsCredentials) {
-        log.info("server: " + wsCredentials.getServerUrl());
+        LOGGER.info("server: " + wsCredentials.getServerUrl());
         return new WsApiAccess(wsCredentials);
     }
 
     @Override
     public synchronized ImportStatus importWsDatasources(List<String> projectTokens, User user, WSCredentials wsCredentials) throws TException {
-        log.info("wsimport: importWsDatasources method");
+        LOGGER.info("wsimport: importWsDatasources method");
         WsApiAccess wsApiAccess = getWsApiAccessWrapper(wsCredentials);
         ThriftUploader thriftUploader = new ThriftUploader(wsApiAccess);
-        Collection<WsProject> wsProjects = null;
+        Collection<WsProject> wsProjects = new ArrayList<>(projectTokens.size());
         WsProjectService wsProjectService = new WsProjectService();
 
         for (String token : projectTokens) {
-            log.info("whitesource project with token, " + token + ", will be imported!");
+            LOGGER.info("whitesource project with token, " + token + ", will be imported!");
             String projectName = wsProjectService.getProjectName(token);
             WsProject wsProject = new WsProject(projectName, token);
             wsProjects.add(wsProject);
         }
-
         return thriftUploader.importWsProjects(wsProjects, user);
     }
 

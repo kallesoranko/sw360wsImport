@@ -10,20 +10,18 @@
  */
 package io.verifa.sw360.ws.domain;
 
-import java.util.Collection;
-
 /**
  * @author: ksoranko@verifa.io
  */
 public class WsProjectHierarchy {
 
-    private Collection<WsLibrary> libraries;
+    private WsLibrary[] libraries;
 
-    public Collection<WsLibrary> getLibraries() {
+    public WsLibrary[] getLibraries() {
         return libraries;
     }
 
-    public void setLibraries(Collection<WsLibrary> libraries) {
+    public void setLibraries(WsLibrary[] libraries) {
         this.libraries = libraries;
     }
 }

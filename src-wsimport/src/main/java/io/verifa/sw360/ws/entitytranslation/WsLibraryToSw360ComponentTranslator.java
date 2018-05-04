@@ -14,8 +14,7 @@ package io.verifa.sw360.ws.entitytranslation;
 
 import io.verifa.sw360.ws.domain.WsLibrary;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * @author ksoranko@verifa.io
@@ -27,8 +26,17 @@ public class WsLibraryToSw360ComponentTranslator implements EntityTranslator<WsL
 
         org.eclipse.sw360.datahandler.thrift.components.Component sw360component = new org.eclipse.sw360.datahandler.thrift.components.Component(wsLibrary.getName());
 
-        sw360component.setCategories(new HashSet<String>(Arrays.asList(new String[] {wsLibrary.getType()})));
-        sw360component.setDescription("ccordinates: " + wsLibrary.getCoordinates());
+        sw360component.setCategories(new HashSet<>(Collections.singletonList(wsLibrary.getType())));
+        Map<String, String> externalIds = new HashMap<>();
+        externalIds.put("Filename", wsLibrary.getFilename());
+        externalIds.put("Coordinates", wsLibrary.getCoordinates());
+        sw360component.setExternalIds(externalIds);
+
+        /* TO BE DONE
+        Set<String> mainLicenses = new HashSet<>();
+        mainLicenses.add(wsLibrary.get)
+        sw360component.setMainLicenseIds()
+        */
 
         return sw360component;
     }

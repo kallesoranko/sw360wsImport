@@ -15,13 +15,13 @@ package io.verifa.sw360.ws.domain;
  */
 public class WsProjectVitals {
 
-    private WsProjectVitalInformation projectVitals;
+    private WsProjectVitalInformation[] projectVitals;
 
-    public WsProjectVitalInformation getProjectVitals() {
+    public WsProjectVitalInformation[] getProjectVitals() {
         return projectVitals;
     }
 
-    public void setProjectVitals(WsProjectVitalInformation projectVitals) {
+    public void setProjectVitals(WsProjectVitalInformation[] projectVitals) {
         this.projectVitals = projectVitals;
     }
 }

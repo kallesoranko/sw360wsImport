@@ -14,6 +14,7 @@ package io.verifa.sw360.ws.thrift;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
+import io.verifa.sw360.ws.domain.WsLibrary;
 import io.verifa.sw360.ws.thrift.helper.ProjectImportError;
 import io.verifa.sw360.ws.thrift.helper.ProjectImportResult;
 import io.verifa.sw360.ws.domain.WsProject;
@@ -46,7 +47,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
  */
 public class ThriftUploader {
 
-    private static final Logger logger = Logger.getLogger(ThriftUploader.class);
+    private static final Logger LOGGER = Logger.getLogger(ThriftUploader.class);
 
     private final WsLibraryToSw360ComponentTranslator componentToComponentTranslator = new WsLibraryToSw360ComponentTranslator();
     private final WsLibraryToSw360ReleaseTranslator componentToReleaseTranslator = new WsLibraryToSw360ReleaseTranslator();
@@ -73,10 +74,10 @@ public class ThriftUploader {
                             .findFirst()
                             .map(idExtractor);
                     if (nomineeId.isPresent()) {
-                        logger.info(wsName + " to import matches a " + sw360name + " with id: " + nomineeId.get());
+                        LOGGER.info(wsName + " to import matches a " + sw360name + " with id: " + nomineeId.get());
                         nominees.stream()
                                 .skip(1)
-                                .forEach(n -> logger.error(wsName + " to import would also match a " + sw360name + " with id: " + idExtractor.apply(n)));
+                                .forEach(n -> LOGGER.error(wsName + " to import would also match a " + sw360name + " with id: " + idExtractor.apply(n)));
                     }
                     return nomineeId;
                 }
@@ -90,16 +91,16 @@ public class ThriftUploader {
      *
      */
     protected ProjectImportResult createProject(WsProject wsProject, User user) throws TException  {
-        logger.info("Try to import whitesource project: " + wsProject.getProjectName());
-        logger.info("Sw360-User: " + user.email);
+        LOGGER.info("Try to import whitesource project: " + wsProject.getProjectName());
+        LOGGER.info("Sw360-User: " + user.email);
 
         if (wsProject.getProjectName() == null || wsProject.getProjectToken() == null) {
-            logger.error("Unable to get project: " + wsProject.getProjectName() + " with token: " + wsProject.getProjectToken() + " from whitesource!");
+            LOGGER.error("Unable to get project: " + wsProject.getProjectName() + " with token: " + wsProject.getProjectToken() + " from whitesource!");
             return new ProjectImportResult(ProjectImportError.PROJECT_NOT_FOUND);
         }
 
         if (thriftExchange.doesProjectAlreadyExists(wsProject.getProjectToken(), wsProject.getProjectName(), user)) {
-            logger.error("Project already in database: " + wsProject.getProjectName());
+            LOGGER.error("Project already in database: " + wsProject.getProjectName());
             return new ProjectImportResult(ProjectImportError.PROJECT_ALREADY_EXISTS);
         }
 
@@ -128,14 +129,14 @@ public class ThriftUploader {
             try{
                 projectImportResult = createProject(wsProject, user);
             } catch (TException e){
-                logger.error("Error when creating the project", e);
+                LOGGER.error("Error when creating the project", e);
                 wsImportStatus.setRequestStatus(RequestStatus.FAILURE);
                 return wsImportStatus;
             }
             if (projectImportResult.isSuccess()) {
                 successfulIds.add(wsProject.getProjectName());
             } else {
-                logger.error("Could not import project with whitesource name: " + wsProject.getProjectName());
+                LOGGER.error("Could not import project with whitesource name: " + wsProject.getProjectName());
                 failedIds.put(wsProject.getProjectName(), projectImportResult.getError().getText());
             }
         }
@@ -150,7 +151,7 @@ public class ThriftUploader {
      *
      */
     protected String getOrCreateLicenseId(io.verifa.sw360.ws.domain.WsLicense wsLicense, User user) {
-        logger.info("Try to import whitesource License: " + wsLicense.getName());
+        LOGGER.info("Try to import whitesource License: " + wsLicense.getName());
 
         Optional<String> potentialLicenseId = searchExistingEntityId(thriftExchange.searchLicenseByWsName(wsLicense.getName()),
                 License::getId,
@@ -162,7 +163,7 @@ public class ThriftUploader {
         } else {
             License sw360license = licenseToLicenseTranslator.apply(wsLicense);
             String licenseId = thriftExchange.addLicense(sw360license, user);
-            logger.info("Imported license: " + licenseId);
+            LOGGER.info("Imported license: " + licenseId);
             return licenseId;
         }
     }
@@ -173,7 +174,7 @@ public class ThriftUploader {
      *
      */
     private String getOrCreateComponent(io.verifa.sw360.ws.domain.WsLibrary wsLibrary, User sw360user) {
-        logger.info("Try to import whitesource Component: " + wsLibrary.getName());
+        LOGGER.info("Try to import whitesource Component: " + wsLibrary.getName());
 
         String componentVersion = isNullOrEmpty(wsLibrary.getVersion()) ? WsLibraryToSw360ReleaseTranslator.unknownVersionString : wsLibrary.getVersion();
         Optional<String> potentialReleaseId = searchExistingEntityId(thriftExchange.searchReleaseByNameAndVersion(wsLibrary.getName(), componentVersion),
@@ -215,21 +216,22 @@ public class ThriftUploader {
 
     private Set<ReleaseRelation> createReleases(WsProject wsProject, User user) {
         WsProjectService wsProjectService = new WsProjectService();
-        Collection<io.verifa.sw360.ws.domain.WsLibrary> libraries =  wsProjectService.getProjectHierarchy(wsProject.getProjectToken());
+        io.verifa.sw360.ws.domain.WsLibrary[] libraries =  wsProjectService.getProjectHierarchy(wsProject.getProjectToken());
+        List<WsLibrary> libraryList = Arrays.asList(libraries);
 
-        if (libraries == null) {
+        if (libraryList == null) {
             return ImmutableSet.of();
         }
 
-        Set<ReleaseRelation> releases = libraries.stream()
+        Set<ReleaseRelation> releases = libraryList.stream()
                 .map(c -> createReleaseRelation(c, user))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        if (releases.size() != libraries.size()) {
-            logger.warn("expected to get " + libraries.size() + " different ids of releases but got " + releases.size());
+        if (releases.size() != libraryList.size()) {
+            LOGGER.warn("expected to get " + libraryList.size() + " different ids of releases but got " + releases.size());
         } else {
-            logger.info("The expected number of releases was imported or already found in database.");
+            LOGGER.info("The expected number of releases was imported or already found in database.");
         }
 
         return releases;

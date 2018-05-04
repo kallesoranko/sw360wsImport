@@ -10,19 +10,18 @@
  */
 package io.verifa.sw360.ws.rest;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
-import io.verifa.sw360.ws.utility.WsSettings;
 import io.verifa.sw360.ws.utility.WsType;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.log4j.Logger;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.UriBuilder;
+import java.io.IOException;
 
 /**
  * @author: ksoranko@verifa.io
@@ -30,37 +29,43 @@ import javax.ws.rs.core.UriBuilder;
 public class WsRestClient {
 
     private static final Logger logger = Logger.getLogger(WsRestClient.class);
+    private static final String REST_URI = "https://api.whitesourcesoftware.com/api/v1.0";
 
     public WsRestClient() {
     }
 
-    public String getData(String request, String token, WsType type) {
+    public String getData(String requestString, String token, WsType type) {
+        String result = null;
+        String input = null;
+
+        switch (type) {
+            case ORGANIZATION:
+                input = "{\"requestType\":\"" + requestString + "\",\"orgToken\":\"" + token + "\"}";
+                break;
+            case PRODUCT:
+                input = "{\"requestType\":\"" + requestString + "\",\"productToken\":\"" + token + "\"}";
+                break;
+            case PROJECT:
+                input = "{\"requestType\":\"" + requestString + "\",\"projectToken\":\"" + token + "\"}";
+                break;
+        }
+
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        HttpPost request = new HttpPost(REST_URI);
+        request.addHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+        StringEntity in = new StringEntity(input, ContentType.create("application/json"));
+        request.setEntity(in);
+
         try {
-            ClientConfig config = new DefaultClientConfig();
-            Client client = Client.create(config);
-            WebResource webResource = client.resource(UriBuilder.fromUri(WsSettings.WS_REST_ENDPOINT).build());
-            MultivaluedMap formData = new MultivaluedMapImpl();
-            formData.add("requestType", request);
-            switch (type) {
-                case ORGANIZATION:
-                    formData.add("orgToken", token);
-                    break;
-                case PRODUCT:
-                    formData.add("productToken", token);
-                    break;
-                case PROJECT:
-                    formData.add("projectToken", token);
-                    break;
-            }
-            ClientResponse response = webResource.type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, formData);
-            if (response.getStatus() != 201) {
-                throw new RuntimeException("Failed : HTTP error code : " + response.getStatus());
-            }
-            String output = response.getEntity(String.class);
-            return output;
+            HttpResponse response = httpClient.execute(request);
+            result = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+            logger.info("--- result: " + result);
+        } catch (IOException e) {
+            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
         }
+
+        return result;
     }
 }

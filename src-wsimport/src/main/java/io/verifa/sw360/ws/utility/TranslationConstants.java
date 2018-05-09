@@ -18,6 +18,7 @@ package io.verifa.sw360.ws.utility;
  */
 public class TranslationConstants {
     public static final String WS_ID = "wsId";
+    public static final String UNKNOWN = "UNKNOWN";
 
     private TranslationConstants(){
         //Utility class with only static members

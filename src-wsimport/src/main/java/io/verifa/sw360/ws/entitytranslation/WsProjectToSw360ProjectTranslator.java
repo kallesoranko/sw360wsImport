@@ -11,9 +11,10 @@
 package io.verifa.sw360.ws.entitytranslation;
 
 import io.verifa.sw360.ws.domain.WsProject;
-import io.verifa.sw360.ws.utility.TranslationConstants;
 
 import java.util.HashMap;
+
+import static io.verifa.sw360.ws.utility.TranslationConstants.WS_ID;
 
 /**
  * @author ksoranko@verifa.io
@@ -26,7 +27,7 @@ public class WsProjectToSw360ProjectTranslator implements EntityTranslator<WsPro
         org.eclipse.sw360.datahandler.thrift.projects.Project projectSW360 = new org.eclipse.sw360.datahandler.thrift.projects.Project();
 
         projectSW360.setExternalIds(new HashMap<>());
-        projectSW360.getExternalIds().put(TranslationConstants.WS_ID, wsProject.getProjectName());
+        projectSW360.getExternalIds().put(WS_ID, wsProject.getProjectName());
         projectSW360.setDescription(wsProject.getProjectToken());
         projectSW360.setName(wsProject.getProjectName());
 

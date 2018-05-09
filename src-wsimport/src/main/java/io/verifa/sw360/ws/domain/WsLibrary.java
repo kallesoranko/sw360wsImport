@@ -25,6 +25,8 @@ public class WsLibrary {
     private String sha1;
     private String type;
     private String coordinates;
+    private WsLibrary[] dependencies;
+    private WsLicense[] licenses;
 
     public String getKeyUuid() {
         return keyUuid;
@@ -104,6 +106,22 @@ public class WsLibrary {
 
     public void setCoordinates(String coordinates) {
         this.coordinates = coordinates;
+    }
+
+    public WsLibrary[] getDependencies() {
+        return dependencies;
+    }
+
+    public void setDependencies(WsLibrary[] dependencies) {
+        this.dependencies = dependencies;
+    }
+
+    public WsLicense[] getLicenses() {
+        return licenses;
+    }
+
+    public void setLicenses(WsLicense[] licenses) {
+        this.licenses = licenses;
     }
 
 }

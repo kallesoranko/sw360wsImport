@@ -15,6 +15,7 @@ package io.verifa.sw360.ws.thrift;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import io.verifa.sw360.ws.domain.WsLibrary;
+import io.verifa.sw360.ws.domain.WsLicense;
 import io.verifa.sw360.ws.thrift.helper.ProjectImportError;
 import io.verifa.sw360.ws.thrift.helper.ProjectImportResult;
 import io.verifa.sw360.ws.domain.WsProject;
@@ -41,6 +42,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.verifa.sw360.ws.utility.TranslationConstants.UNKNOWN;
 
 /**
  * @author: ksoranko@verifa.io
@@ -48,7 +50,8 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 public class ThriftUploader {
 
     private static final Logger LOGGER = Logger.getLogger(ThriftUploader.class);
-
+    private static List<WsLibrary> hierarchyList = new ArrayList<>();
+    private static List<WsLibrary> libraryList = new ArrayList<>();
     private final WsLibraryToSw360ComponentTranslator componentToComponentTranslator = new WsLibraryToSw360ComponentTranslator();
     private final WsLibraryToSw360ReleaseTranslator componentToReleaseTranslator = new WsLibraryToSw360ReleaseTranslator();
     private final WsLicenseToSw360LicenseTranslator licenseToLicenseTranslator = new WsLicenseToSw360LicenseTranslator();
@@ -84,12 +87,6 @@ public class ThriftUploader {
         );
     }
 
-    /*
-     *
-     * Project <-> ProjectInfo relation
-     * Create doesProjectAlreadyExists method into ThriftExchange.java
-     *
-     */
     protected ProjectImportResult createProject(WsProject wsProject, User user) throws TException  {
         LOGGER.info("Try to import whitesource project: " + wsProject.getProjectName());
         LOGGER.info("Sw360-User: " + user.email);
@@ -107,7 +104,7 @@ public class ThriftUploader {
         Project projectSW360 = projectToProjectTranslator.apply(wsProject);
         Set<ReleaseRelation> releases = createReleases(wsProject, user);
         projectSW360.setProjectResponsible(user.getEmail());
-        projectSW360.setDescription("whitesource project token: " + wsProject.getProjectToken());
+        projectSW360.setDescription("Imported from Whitesource wiht project token: " + wsProject.getProjectToken());
         projectSW360.setReleaseIdToUsage(releases.stream()
                 .collect(Collectors.toMap(ReleaseRelation::getReleaseId, ReleaseRelation::getProjectReleaseRelationship)));
 
@@ -145,11 +142,6 @@ public class ThriftUploader {
                 .setSuccessfulIds(successfulIds);
     }
 
-    /*
-     *
-     * License ID
-     *
-     */
     protected String getOrCreateLicenseId(io.verifa.sw360.ws.domain.WsLicense wsLicense, User user) {
         LOGGER.info("Try to import whitesource License: " + wsLicense.getName());
 
@@ -168,15 +160,10 @@ public class ThriftUploader {
         }
     }
 
-    /*
-     *
-     * Component's license
-     *
-     */
     private String getOrCreateComponent(io.verifa.sw360.ws.domain.WsLibrary wsLibrary, User sw360user) {
         LOGGER.info("Try to import whitesource Component: " + wsLibrary.getName());
 
-        String componentVersion = isNullOrEmpty(wsLibrary.getVersion()) ? WsLibraryToSw360ReleaseTranslator.unknownVersionString : wsLibrary.getVersion();
+        String componentVersion = isNullOrEmpty(wsLibrary.getVersion()) ? UNKNOWN : wsLibrary.getVersion();
         Optional<String> potentialReleaseId = searchExistingEntityId(thriftExchange.searchReleaseByNameAndVersion(wsLibrary.getName(), componentVersion),
                 Release::getId,
                 "Library",
@@ -191,6 +178,7 @@ public class ThriftUploader {
                 Component::getId,
                 "Library",
                 "Component");
+
         String componentId;
         if (potentialComponentId.isPresent()) {
             componentId = potentialComponentId.get();
@@ -198,8 +186,17 @@ public class ThriftUploader {
             Component sw360component = componentToComponentTranslator.apply(wsLibrary);
             componentId = thriftExchange.addComponent(sw360component, sw360user);
         }
-
         releaseSW360.setComponentId(componentId);
+
+        if (wsLibrary.getLicenses() == null) {
+            releaseSW360.setMainLicenseIds(Collections.singleton(UNKNOWN));
+        } else {
+            Set<String> mainLicenses = new HashSet<>();
+            for (WsLicense wsLicense : wsLibrary.getLicenses()) {
+                mainLicenses.add(getOrCreateLicenseId(wsLicense, sw360user));
+            }
+            releaseSW360.setMainLicenseIds(mainLicenses);
+        }
 
         return thriftExchange.addRelease(releaseSW360, sw360user);
     }
@@ -216,19 +213,25 @@ public class ThriftUploader {
 
     private Set<ReleaseRelation> createReleases(WsProject wsProject, User user) {
         WsProjectService wsProjectService = new WsProjectService();
-        io.verifa.sw360.ws.domain.WsLibrary[] libraries =  wsProjectService.getProjectHierarchy(wsProject.getProjectToken());
-        List<WsLibrary> libraryList = Arrays.asList(libraries);
 
+        /*
+         * Needed with hierarchy
+        io.verifa.sw360.ws.domain.WsLibrary[] hierarchy =  wsProjectService.getProjectHierarchy(wsProject.getProjectToken());
+        getDeps(hierarchy);
+        */
+
+        io.verifa.sw360.ws.domain.WsLibrary[] libraries =  wsProjectService.getProjectLicenses(wsProject.getProjectToken());
+        libraryList = Arrays.asList(libraries);
         if (libraryList == null) {
             return ImmutableSet.of();
         }
 
-        Set<ReleaseRelation> releases = libraryList.stream()
+        Set<ReleaseRelation> releases = libraryList .stream()
                 .map(c -> createReleaseRelation(c, user))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        if (releases.size() != libraryList.size()) {
+        if (releases.size() != libraryList .size()) {
             LOGGER.warn("expected to get " + libraryList.size() + " different ids of releases but got " + releases.size());
         } else {
             LOGGER.info("The expected number of releases was imported or already found in database.");
@@ -236,6 +239,20 @@ public class ThriftUploader {
 
         return releases;
     }
+
+    /* Needed if project hierarchy is used */
+    private static void getDeps(WsLibrary[] wsLibraries) {
+        for (WsLibrary wsLibrary : wsLibraries)
+            if (wsLibrary.getDependencies() == null) {
+                libraryList.add(wsLibrary);
+            } else {
+                libraryList.add(wsLibrary);
+                getDeps(wsLibrary.getDependencies());
+            }
+    }
+
+
+
 
 
 }

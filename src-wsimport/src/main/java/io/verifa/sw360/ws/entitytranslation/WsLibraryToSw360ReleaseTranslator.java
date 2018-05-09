@@ -21,26 +21,25 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.verifa.sw360.ws.utility.TranslationConstants.UNKNOWN;
 
 /**
  * @author ksoranko@verifa.io
  */
 public class WsLibraryToSw360ReleaseTranslator implements EntityTranslator<WsLibrary, Release> {
 
-    public static final String unknownVersionString = "UNKNOWN";
-
     @Override
-    public Release apply(WsLibrary wslibrary) {
+    public Release apply(WsLibrary wsLibrary) {
 
         Release releaseSW360 = new Release();
         releaseSW360.setExternalIds(new HashMap<>());
-        releaseSW360.setName(wslibrary.getName());
-        releaseSW360.getExternalIds().put(TranslationConstants.WS_ID, wslibrary.getName());
+        releaseSW360.setName(wsLibrary.getName());
+        releaseSW360.getExternalIds().put(TranslationConstants.WS_ID, wsLibrary.getName());
 
-        if (!isNullOrEmpty(wslibrary.getVersion())) {
-            releaseSW360.setVersion(wslibrary.getVersion());
+        if (!isNullOrEmpty(wsLibrary.getVersion())) {
+            releaseSW360.setVersion(wsLibrary.getVersion());
         } else {
-            releaseSW360.setVersion(unknownVersionString);
+            releaseSW360.setVersion(UNKNOWN);
         }
 
         releaseSW360.setModerators(new HashSet<>());

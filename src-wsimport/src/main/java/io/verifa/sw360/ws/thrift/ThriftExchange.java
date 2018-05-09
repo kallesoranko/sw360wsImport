@@ -78,6 +78,7 @@ public class ThriftExchange {
     public String addComponent(Component component, User user) {
         String componentId = null;
         try {
+            logger.info("------ component name: " +  component.getName());
             AddDocumentRequestSummary summary = getComponentClient().addComponent(component, user);
             if (SUCCESS.equals(summary.getRequestStatus())) {
                 componentId = summary.getId();

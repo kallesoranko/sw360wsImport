@@ -15,6 +15,7 @@ package io.verifa.sw360.ws.entitytranslation;
 import io.verifa.sw360.ws.domain.WsLibrary;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -28,9 +29,10 @@ public class WsLibraryToSw360ComponentTranslator implements EntityTranslator<WsL
         org.eclipse.sw360.datahandler.thrift.components.Component sw360component = new org.eclipse.sw360.datahandler.thrift.components.Component(wsLibrary.getName());
 
         sw360component.setCategories(new HashSet<>(Collections.singletonList(wsLibrary.getType())));
+        sw360component.setExternalIds(new HashMap<>());
         sw360component.getExternalIds().put("Filename", wsLibrary.getFilename());
-        sw360component.getExternalIds().put("Coordinates", wsLibrary.getCoordinates());
-
+        /*sw360component.getExternalIds().put("Coordinates", wsLibrary.getCoordinates());
+        */
 
         return sw360component;
     }

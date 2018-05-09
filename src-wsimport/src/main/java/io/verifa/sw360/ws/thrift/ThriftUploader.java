@@ -16,8 +16,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import io.verifa.sw360.ws.domain.WsLibrary;
 import io.verifa.sw360.ws.domain.WsLicense;
-import io.verifa.sw360.ws.thrift.helper.ProjectImportError;
-import io.verifa.sw360.ws.thrift.helper.ProjectImportResult;
 import io.verifa.sw360.ws.domain.WsProject;
 import io.verifa.sw360.ws.entitytranslation.WsLibraryToSw360ComponentTranslator;
 import io.verifa.sw360.ws.entitytranslation.WsLibraryToSw360ReleaseTranslator;
@@ -25,6 +23,8 @@ import io.verifa.sw360.ws.entitytranslation.WsLicenseToSw360LicenseTranslator;
 import io.verifa.sw360.ws.entitytranslation.WsProjectToSw360ProjectTranslator;
 import io.verifa.sw360.ws.entitytranslation.helper.ReleaseRelation;
 import io.verifa.sw360.ws.rest.WsProjectService;
+import io.verifa.sw360.ws.thrift.helper.ProjectImportError;
+import io.verifa.sw360.ws.thrift.helper.ProjectImportResult;
 import io.verifa.sw360.ws.utility.WsApiAccess;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
@@ -50,10 +50,8 @@ import static io.verifa.sw360.ws.utility.TranslationConstants.UNKNOWN;
 public class ThriftUploader {
 
     private static final Logger LOGGER = Logger.getLogger(ThriftUploader.class);
-    private static List<WsLibrary> hierarchyList = new ArrayList<>();
-    private static List<WsLibrary> libraryList = new ArrayList<>();
-    private final WsLibraryToSw360ComponentTranslator componentToComponentTranslator = new WsLibraryToSw360ComponentTranslator();
-    private final WsLibraryToSw360ReleaseTranslator componentToReleaseTranslator = new WsLibraryToSw360ReleaseTranslator();
+    private final WsLibraryToSw360ComponentTranslator libraryToComponentTranslator = new WsLibraryToSw360ComponentTranslator();
+    private final WsLibraryToSw360ReleaseTranslator libraryToReleaseTranslator = new WsLibraryToSw360ReleaseTranslator();
     private final WsLicenseToSw360LicenseTranslator licenseToLicenseTranslator = new WsLicenseToSw360LicenseTranslator();
     private final WsProjectToSw360ProjectTranslator projectToProjectTranslator = new WsProjectToSw360ProjectTranslator();
 
@@ -104,7 +102,7 @@ public class ThriftUploader {
         Project projectSW360 = projectToProjectTranslator.apply(wsProject);
         Set<ReleaseRelation> releases = createReleases(wsProject, user);
         projectSW360.setProjectResponsible(user.getEmail());
-        projectSW360.setDescription("Imported from Whitesource wiht project token: " + wsProject.getProjectToken());
+        projectSW360.setDescription("Imported from Whitesource with project token: " + wsProject.getProjectToken());
         projectSW360.setReleaseIdToUsage(releases.stream()
                 .collect(Collectors.toMap(ReleaseRelation::getReleaseId, ReleaseRelation::getProjectReleaseRelationship)));
 
@@ -172,7 +170,7 @@ public class ThriftUploader {
             return potentialReleaseId.get();
         }
 
-        Release releaseSW360 = componentToReleaseTranslator.apply(wsLibrary);
+        Release releaseSW360 = libraryToReleaseTranslator.apply(wsLibrary);
         releaseSW360.getModerators().add(sw360user.getEmail());
         Optional<String> potentialComponentId = searchExistingEntityId(thriftExchange.searchComponentByName(wsLibrary.getName()),
                 Component::getId,
@@ -183,7 +181,7 @@ public class ThriftUploader {
         if (potentialComponentId.isPresent()) {
             componentId = potentialComponentId.get();
         } else {
-            Component sw360component = componentToComponentTranslator.apply(wsLibrary);
+            Component sw360component = libraryToComponentTranslator.apply(wsLibrary);
             componentId = thriftExchange.addComponent(sw360component, sw360user);
         }
         releaseSW360.setComponentId(componentId);
@@ -212,16 +210,8 @@ public class ThriftUploader {
     }
 
     private Set<ReleaseRelation> createReleases(WsProject wsProject, User user) {
-        WsProjectService wsProjectService = new WsProjectService();
-
-        /*
-         * Needed with hierarchy
-        io.verifa.sw360.ws.domain.WsLibrary[] hierarchy =  wsProjectService.getProjectHierarchy(wsProject.getProjectToken());
-        getDeps(hierarchy);
-        */
-
-        io.verifa.sw360.ws.domain.WsLibrary[] libraries =  wsProjectService.getProjectLicenses(wsProject.getProjectToken());
-        libraryList = Arrays.asList(libraries);
+        io.verifa.sw360.ws.domain.WsLibrary[] libraries =  new WsProjectService().getProjectLicenses(wsProject.getProjectToken());
+        List<WsLibrary> libraryList = Arrays.asList(libraries);
         if (libraryList == null) {
             return ImmutableSet.of();
         }
@@ -241,6 +231,7 @@ public class ThriftUploader {
     }
 
     /* Needed if project hierarchy is used */
+    /*
     private static void getDeps(WsLibrary[] wsLibraries) {
         for (WsLibrary wsLibrary : wsLibraries)
             if (wsLibrary.getDependencies() == null) {
@@ -250,6 +241,7 @@ public class ThriftUploader {
                 getDeps(wsLibrary.getDependencies());
             }
     }
+    */
 
 
 

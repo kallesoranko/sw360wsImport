@@ -42,6 +42,111 @@ public class ThriftExchange {
     private static final Logger logger = Logger.getLogger(ThriftExchange.class);
     private final ThriftApi thriftApi = new ThriftApiSimple();
 
+
+
+
+
+    /**
+     * Add the Project to DB. Required fields are: name.
+     *
+     * @param project Project to be added
+     * @param user
+     * @return projectId-String from DB
+     */
+    public String addProject(Project project, User user) {
+        String projectId = null;
+        try {
+            AddDocumentRequestSummary summary = thriftApi.getProjectClient().addProject(project, user);
+            if (SUCCESS.equals(summary.getRequestStatus())) {
+                projectId = summary.getId();
+            } else {
+                logFailedAddDocument(summary.getRequestStatus(), "project");
+            }
+        } catch (TException e) {
+            logger.error("Could not add Project for user with email=[" + user.getEmail() + "]:" + e);
+        }
+        return projectId;
+    }
+
+    /**
+     * Add the Component to DB. Required fields are: name.
+     *
+     * @param component Component to be added
+     * @param user
+     * @return ComponentId-String from DB.
+     */
+    public String addComponent(Component component, User user) {
+        String componentId = null;
+        try {
+            AddDocumentRequestSummary summary = getComponentClient().addComponent(component, user);
+            if (SUCCESS.equals(summary.getRequestStatus())) {
+                componentId = summary.getId();
+            } else {
+                logFailedAddDocument(summary.getRequestStatus(), "component");
+            }
+        } catch (TException e) {
+            logger.error("Could not add Component for user with email=[" + user.getEmail() + "]:" + e);
+        }
+        return componentId;
+    }
+
+    /**
+     * Add the Release to DB. Required fields are: name, version, componentId.
+     *
+     * @param release Release to be added
+     * @param user
+     * @return releaseId-String from DB.
+     */
+    public String addRelease(Release release, User user) {
+        String releaseId = null;
+        try {
+            AddDocumentRequestSummary summary = getComponentClient().addRelease(release, user);
+            if (SUCCESS.equals(summary.getRequestStatus())) {
+                releaseId = summary.getId();
+            } else {
+                logFailedAddDocument(summary.getRequestStatus(), "release");
+            }
+        } catch (TException e) {
+            logger.error("Could not add Release for user with email=[" + user.getEmail() + "]:" + e);
+        }
+        return releaseId;
+    }
+
+    /**
+     * Add the License to DB.
+     *
+     * @param license
+     * @param user
+     * @return license-String from DB
+     */
+    public String addLicense(License license, User user) {
+        List<License> licenses = null;
+        try {
+            licenses = thriftApi.getLicenseClient().addLicenses(Collections.singletonList(license), user);
+        } catch (TException e) {
+            logger.error("Could not add License for user with email=[" + user.getEmail() + "]:" + e);
+        }
+        return licenses == null ? null : licenses.get(0).getId();
+    }
+
+    /**
+     * Get project client for Thrift service
+     * @return
+     */
+    private org.eclipse.sw360.datahandler.thrift.projects.ProjectService.Iface getProjectClient() {
+        return thriftApi.getProjectClient();
+    }
+
+    /**
+     * Get component client for Thrift service
+     * @return
+     */
+    private org.eclipse.sw360.datahandler.thrift.components.ComponentService.Iface getComponentClient() {
+        return thriftApi.getComponentClient();
+    }
+
+
+
     public Optional<List<Release>> searchReleaseByNameAndVersion(String name, String version) {
         List<Release> releases = null;
         try {
@@ -68,27 +173,25 @@ public class ThriftExchange {
         }
     }
 
-    /**
-     * Add the Component to DB. Required fields are: name.
-     *
-     * @param component Component to be added
-     * @param user
-     * @return ComponentId-String from DB.
-     */
-    public String addComponent(Component component, User user) {
-        String componentId = null;
-        try {
-            logger.info("------ component name: " +  component.getName());
-            AddDocumentRequestSummary summary = getComponentClient().addComponent(component, user);
-            if (SUCCESS.equals(summary.getRequestStatus())) {
-                componentId = summary.getId();
-            } else {
-                logFailedAddDocument(summary.getRequestStatus(), "component");
-            }
-        } catch (TException e) {
-            logger.error("Could not add Component for user with email=[" + user.getEmail() + "]:" + e);
+    public Optional<List<License>> searchLicenseByWsName(String wsId) {
+        return getFilteredLicenseList(license ->
+                        license.isSetExternalIds() && CommonUtils.nullToEmptyString(license.getExternalIds().get(TranslationConstants.WS_ID)).equals(wsId),
+                "wsId=[" + wsId + "]:"
+        );
+    }
+
+    boolean doesProjectAlreadyExists(String wsProjectId, String wsProjectName, User user) throws TException {
+        List<Project> accessibleProjects = getAccessibleProjectsSummary(user);
+
+        if (hasAccessibleProjectWithWsToken(wsProjectId, accessibleProjects)) {
+            logger.info("Project to import was already imported with wsId: " + wsProjectId);
+            return true;
         }
-        return componentId;
+        if (hasAccessibleProjectWithWsName(wsProjectName, accessibleProjects)) {
+            logger.info("Project to import already exists in the DB with name: " + wsProjectName);
+            return true;
+        }
+        return false;
     }
 
     private void logFailedAddDocument(AddDocumentRequestStatus status, String documentTypeString) {
@@ -97,65 +200,6 @@ public class ThriftExchange {
         } else {
             logger.error("Adding the " + documentTypeString + "failed.");
         }
-    }
-
-    /**
-     * Add the Release to DB. Required fields are: name, version, componentId.
-     *
-     * @param release Release to be added
-     * @param user
-     * @return releaseId-String from DB.
-     */
-    public String addRelease(Release release, User user) {
-        String releaseId = null;
-        try {
-            AddDocumentRequestSummary summary = getComponentClient().addRelease(release, user);
-            if (SUCCESS.equals(summary.getRequestStatus())) {
-                releaseId = summary.getId();
-            } else {
-                logFailedAddDocument(summary.getRequestStatus(), "release");
-            }
-        } catch (TException e) {
-            logger.error("Could not add Release for user with email=[" + user.getEmail() + "]:" + e);
-        }
-        return releaseId;
-    }
-
-    public String addProject(Project project, User user) {
-        String projectId = null;
-        try {
-            AddDocumentRequestSummary summary = thriftApi.getProjectClient().addProject(project, user);
-            if (SUCCESS.equals(summary.getRequestStatus())) {
-                projectId = summary.getId();
-            } else {
-                logFailedAddDocument(summary.getRequestStatus(), "project");
-            }
-        } catch (TException e) {
-            logger.error("Could not add Project for user with email=[" + user.getEmail() + "]:" + e);
-        }
-        return projectId;
-    }
-
-    public String addLicense(License license, User user) {
-        List<License> licenses = null;
-        try {
-            licenses = thriftApi.getLicenseClient().addLicenses(Collections.singletonList(license), user);
-        } catch (TException e) {
-            logger.error("Could not add License for user with email=[" + user.getEmail() + "]:" + e);
-        }
-        return licenses == null ? null : licenses.get(0).getId();
-    }
-
-    private org.eclipse.sw360.datahandler.thrift.components.ComponentService.Iface getComponentClient() {
-        return thriftApi.getComponentClient();
-    }
-
-
-    public Optional<List<License>> searchLicenseByWsName(String wsId) {
-        return getFilteredLicenseList(license ->
-                        license.isSetExternalIds() && CommonUtils.nullToEmptyString(license.getExternalIds().get(TranslationConstants.WS_ID)).equals(wsId),
-                "wsId=[" + wsId + "]:"
-        );
     }
 
     private Optional<List<License>> getFilteredLicenseList(Predicate<License> filter, String selector) {
@@ -171,23 +215,6 @@ public class ThriftExchange {
         }
     }
 
-    /*
-     * Check whether projehct already exist
-     */
-    boolean doesProjectAlreadyExists(String wsProjectToken, String wsProjectName, User user) throws TException {
-        List<Project> accessibleProjects = getAccessibleProjectsSummary(user);
-
-        if (hasAccessibleProjectWithWsToken(wsProjectToken, accessibleProjects)) {
-            logger.info("Project to import was already imported with bdpId: " + wsProjectToken);
-            return true;
-        }
-        if (hasAccessibleProjectWithWsName(wsProjectName, accessibleProjects)) {
-            logger.info("Project to import already exists in the DB with name: " + wsProjectName);
-            return true;
-        }
-        return false;
-    }
-
     private List<Project> getAccessibleProjectsSummary(User user) {
         List<Project> accessibleProjectsSummary = null;
         try {
@@ -198,14 +225,10 @@ public class ThriftExchange {
         return nullToEmptyList(accessibleProjectsSummary);
     }
 
-    private org.eclipse.sw360.datahandler.thrift.projects.ProjectService.Iface getProjectClient() {
-        return thriftApi.getProjectClient();
-    }
-
-    private boolean hasAccessibleProjectWithWsToken(String wsProjectToken, List<Project> accessibleProjects) throws TException {
+    private boolean hasAccessibleProjectWithWsToken(String wsProjectId, List<Project> accessibleProjects) throws TException {
         return accessibleProjects.stream()
                 .filter(Project::isSetExternalIds)
-                .anyMatch(project -> wsProjectToken.equals(project.getExternalIds().get(TranslationConstants.WS_ID)));
+                .anyMatch(project -> wsProjectId.equals(project.getExternalIds().get(TranslationConstants.WS_ID)));
     }
 
     private boolean hasAccessibleProjectWithWsName(String wsProjectName, List<Project> accessibleProjects) throws TException {

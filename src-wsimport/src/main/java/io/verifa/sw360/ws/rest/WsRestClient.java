@@ -23,13 +23,15 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
+import static io.verifa.sw360.ws.utility.WsSettings.WS_REST_ENDPOINT;
+
 /**
  * @author: ksoranko@verifa.io
  */
 public class WsRestClient {
 
-    private static final Logger logger = Logger.getLogger(WsRestClient.class);
-    private static final String REST_URI = "https://api.whitesourcesoftware.com/api/v1.0";
+    private static final Logger LOGGER = Logger.getLogger(WsRestClient.class);
+    private static final String REST_URI = WS_REST_ENDPOINT;
 
     public WsRestClient() {
     }
@@ -37,7 +39,6 @@ public class WsRestClient {
     public String getData(String requestString, String token, WsType type) {
         String result = null;
         String input = null;
-
         switch (type) {
             case ORGANIZATION:
                 input = "{\"requestType\":\"" + requestString + "\",\"orgToken\":\"" + token + "\"}";
@@ -59,11 +60,8 @@ public class WsRestClient {
         try {
             HttpResponse response = httpClient.execute(request);
             result = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-            logger.info("--- result: " + result);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
         }
 
         return result;

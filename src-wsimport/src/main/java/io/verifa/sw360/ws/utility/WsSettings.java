@@ -13,7 +13,6 @@
 package io.verifa.sw360.ws.utility;
 
 import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.Properties;
 
 /**
@@ -21,23 +20,24 @@ import java.util.Properties;
  */
 public class WsSettings {
 
-    public static final String WS_FILE = "ws.properties";
+    public static final String WS_PROPS_FILE = "ws.properties";
     public static final String WS_REST_ENDPOINT;
-    public static final String WS_ORG_TOKEN;
 
     public static Properties readProperties(String path) {
+        String rootPath = Thread.currentThread().getContextClassLoader().getResource("").getPath();
+        String defaultConfigPath = rootPath + path;
         Properties props = new Properties();
         try {
-            InputStream input = new FileInputStream(path);
-            props.load(input);
-        } catch (Exception e) {}
+            props.load(new FileInputStream(defaultConfigPath));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return props;
     }
 
     static {
-        Properties properties = readProperties(WS_FILE);
+        Properties properties = readProperties(WS_PROPS_FILE);
         WS_REST_ENDPOINT = properties.getProperty("ws.rest.endpoint");
-        WS_ORG_TOKEN = properties.getProperty("ws.token.org");
     }
 
     private WsSettings(){}

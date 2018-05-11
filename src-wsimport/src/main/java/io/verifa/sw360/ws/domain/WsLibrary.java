@@ -15,18 +15,20 @@ package io.verifa.sw360.ws.domain;
  */
 public class WsLibrary {
 
-    //private String keyUuid;
-    //private int keyId;
+    private int keyId;
     private String filename;
     private String name;
-    //private String groupId;
-    //private String artifactId;
     private String version;
-    //private String sha1;
     private String type;
-    //private String coordinates;
-    //private WsLibrary[] dependencies;
     private WsLicense[] licenses;
+
+    public int getKeyId() {
+        return keyId;
+    }
+
+    public void setKeyId(int keyId) {
+        this.keyId = keyId;
+    }
 
     public String getFilename() {
         return filename;

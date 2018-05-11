@@ -27,9 +27,10 @@ public class WsProjectToSw360ProjectTranslator implements EntityTranslator<WsPro
         org.eclipse.sw360.datahandler.thrift.projects.Project projectSW360 = new org.eclipse.sw360.datahandler.thrift.projects.Project();
 
         projectSW360.setExternalIds(new HashMap<>());
-        projectSW360.getExternalIds().put(WS_ID, wsProject.getProjectName());
+        projectSW360.getExternalIds().put(WS_ID, Integer.toString(wsProject.getId()));
         projectSW360.setDescription(wsProject.getProjectToken());
         projectSW360.setName(wsProject.getProjectName());
+        projectSW360.setCreatedOn(wsProject.getCreationDate());
 
         return projectSW360;
     }

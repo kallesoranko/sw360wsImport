@@ -12,7 +12,6 @@
  */
 package io.verifa.sw360.ws.thrift;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import io.verifa.sw360.ws.domain.WsLibrary;
 import io.verifa.sw360.ws.domain.WsLicense;
@@ -25,7 +24,6 @@ import io.verifa.sw360.ws.entitytranslation.helper.ReleaseRelation;
 import io.verifa.sw360.ws.rest.WsProjectService;
 import io.verifa.sw360.ws.thrift.helper.ProjectImportError;
 import io.verifa.sw360.ws.thrift.helper.ProjectImportResult;
-import io.verifa.sw360.ws.utility.WsApiAccess;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.eclipse.sw360.datahandler.thrift.ReleaseRelationship;
@@ -55,17 +53,10 @@ public class ThriftUploader {
     private final WsLicenseToSw360LicenseTranslator licenseToLicenseTranslator = new WsLicenseToSw360LicenseTranslator();
     private final WsProjectToSw360ProjectTranslator projectToProjectTranslator = new WsProjectToSw360ProjectTranslator();
 
-    private final ThriftExchange thriftExchange;
-    private WsApiAccess wsApiAccess;
+    private ThriftExchange thriftExchange;
 
-    public ThriftUploader(WsApiAccess wsApiAccess) {
-        this(new ThriftExchange(), wsApiAccess);
-    }
-
-    @VisibleForTesting
-    ThriftUploader(ThriftExchange thriftExchange, WsApiAccess wsApiAccess) {
-        this.thriftExchange=thriftExchange;
-        this.wsApiAccess = wsApiAccess;
+    public ThriftUploader() {
+        this.thriftExchange = new ThriftExchange();
     }
 
     private <T> Optional<String> searchExistingEntityId(Optional<List<T>> nomineesOpt, Function<T, String> idExtractor, String wsName, String sw360name) {
@@ -102,7 +93,7 @@ public class ThriftUploader {
         Project projectSW360 = projectToProjectTranslator.apply(wsProject);
         Set<ReleaseRelation> releases = createReleases(wsProject, user);
         projectSW360.setProjectResponsible(user.getEmail());
-        projectSW360.setDescription("Imported from Whitesource with project token: " + wsProject.getProjectToken());
+        projectSW360.setDescription("Imported from Whitesource with id: " + wsProject.getId());
         projectSW360.setReleaseIdToUsage(releases.stream()
                 .collect(Collectors.toMap(ReleaseRelation::getReleaseId, ReleaseRelation::getProjectReleaseRelationship)));
 
@@ -159,7 +150,7 @@ public class ThriftUploader {
     }
 
     private String getOrCreateComponent(io.verifa.sw360.ws.domain.WsLibrary wsLibrary, User sw360user) {
-        LOGGER.info("Try to import whitesource Component: " + wsLibrary.getName());
+        LOGGER.info("Try to import whitesource Library: " + wsLibrary.getName() + ", version: " + wsLibrary.getVersion());
 
         String componentVersion = isNullOrEmpty(wsLibrary.getVersion()) ? UNKNOWN : wsLibrary.getVersion();
         Optional<String> potentialReleaseId = searchExistingEntityId(thriftExchange.searchReleaseByNameAndVersion(wsLibrary.getName(), componentVersion),
@@ -229,22 +220,5 @@ public class ThriftUploader {
 
         return releases;
     }
-
-    /* Needed if project hierarchy is used */
-    /*
-    private static void getDeps(WsLibrary[] wsLibraries) {
-        for (WsLibrary wsLibrary : wsLibraries)
-            if (wsLibrary.getDependencies() == null) {
-                libraryList.add(wsLibrary);
-            } else {
-                libraryList.add(wsLibrary);
-                getDeps(wsLibrary.getDependencies());
-            }
-    }
-    */
-
-
-
-
 
 }

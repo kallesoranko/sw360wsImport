@@ -16,19 +16,15 @@ import io.verifa.sw360.ws.domain.WsProject;
 import io.verifa.sw360.ws.rest.WsProjectService;
 import io.verifa.sw360.ws.thrift.ThriftUploader;
 import io.verifa.sw360.ws.utility.TranslationConstants;
-import io.verifa.sw360.ws.utility.WsApiAccess;
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.eclipse.sw360.datahandler.thrift.importstatus.ImportStatus;
 import org.eclipse.sw360.datahandler.thrift.projectimport.ProjectImportService;
 import org.eclipse.sw360.datahandler.thrift.projectimport.RemoteCredentials;
-
 import org.eclipse.sw360.datahandler.thrift.projectimport.WSCredentials;
 import org.eclipse.sw360.datahandler.thrift.projects.Project;
 import org.eclipse.sw360.datahandler.thrift.users.User;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -36,28 +32,16 @@ import java.util.List;
  */
 public class WsImportHandler implements ProjectImportService.Iface {
 
-    private static final Logger LOGGER = Logger.getLogger(WsImportHandler.class);
-
-    private static WsApiAccess getWsApiAccessWrapper(WSCredentials wsCredentials) {
-        LOGGER.info("server: " + wsCredentials.getServerUrl());
-        return new WsApiAccess(wsCredentials);
-    }
-
     @Override
     public synchronized ImportStatus importWsDatasources(List<String> projectTokens, User user, WSCredentials wsCredentials) throws TException {
-        LOGGER.info("wsimport: importWsDatasources method");
-        WsApiAccess wsApiAccess = getWsApiAccessWrapper(wsCredentials);
-        ThriftUploader thriftUploader = new ThriftUploader(wsApiAccess);
-        Collection<WsProject> wsProjects = new ArrayList<>(projectTokens.size());
+        List<WsProject> toImport = new ArrayList<>(projectTokens.size());
         WsProjectService wsProjectService = new WsProjectService();
 
         for (String token : projectTokens) {
-            LOGGER.info("whitesource project with token, " + token + ", will be imported!");
-            String projectName = wsProjectService.getProjectName(token);
-            WsProject wsProject = new WsProject(projectName, token);
-            wsProjects.add(wsProject);
+            WsProject wsProject = wsProjectService.getWsProject(token);
+            toImport.add(wsProject);
         }
-        return thriftUploader.importWsProjects(wsProjects, user);
+        return new ThriftUploader().importWsProjects(toImport, user);
     }
 
     @Override

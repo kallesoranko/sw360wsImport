@@ -31,8 +31,6 @@ public class WsLibraryToSw360ComponentTranslator implements EntityTranslator<WsL
         sw360component.setCategories(new HashSet<>(Collections.singletonList(wsLibrary.getType())));
         sw360component.setExternalIds(new HashMap<>());
         sw360component.getExternalIds().put("Filename", wsLibrary.getFilename());
-        /*sw360component.getExternalIds().put("Coordinates", wsLibrary.getCoordinates());
-        */
 
         return sw360component;
     }

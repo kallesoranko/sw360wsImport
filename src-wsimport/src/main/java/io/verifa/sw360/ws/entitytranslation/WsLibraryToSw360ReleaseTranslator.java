@@ -34,7 +34,7 @@ public class WsLibraryToSw360ReleaseTranslator implements EntityTranslator<WsLib
         Release releaseSW360 = new Release();
         releaseSW360.setExternalIds(new HashMap<>());
         releaseSW360.setName(wsLibrary.getName());
-        releaseSW360.getExternalIds().put(TranslationConstants.WS_ID, wsLibrary.getName());
+        releaseSW360.getExternalIds().put(TranslationConstants.WS_ID, Integer.toString(wsLibrary.getKeyId()));
 
         if (!isNullOrEmpty(wsLibrary.getVersion())) {
             releaseSW360.setVersion(wsLibrary.getVersion());

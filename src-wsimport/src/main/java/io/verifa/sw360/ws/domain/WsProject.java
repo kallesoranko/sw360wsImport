@@ -15,12 +15,24 @@ package io.verifa.sw360.ws.domain;
  */
 public class WsProject {
 
+    private int id;
     private String projectName;
     private String projectToken;
+    private String creationDate;
 
-    public WsProject(String projectName, String projectToken) {
+    public WsProject(int id, String projectName, String projectToken, String creationDate) {
+        this.id = id;
         this.projectName = projectName;
         this.projectToken = projectToken;
+        this.creationDate = creationDate;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getProjectName() {
@@ -37,5 +49,13 @@ public class WsProject {
 
     public void setProjectToken(String projectToken) {
         this.projectToken = projectToken;
+    }
+
+    public String getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(String creationDate) {
+        this.creationDate = creationDate;
     }
 }

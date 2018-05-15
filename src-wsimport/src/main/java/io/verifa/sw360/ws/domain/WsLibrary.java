@@ -20,6 +20,7 @@ public class WsLibrary {
     private String name;
     private String version;
     private String type;
+    private WsReference references;
     private WsLicense[] licenses;
 
     public int getKeyId() {
@@ -60,6 +61,14 @@ public class WsLibrary {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public WsReference getReferences() {
+        return references;
+    }
+
+    public void setReferences(WsReference references) {
+        this.references = references;
     }
 
     public WsLicense[] getLicenses() {

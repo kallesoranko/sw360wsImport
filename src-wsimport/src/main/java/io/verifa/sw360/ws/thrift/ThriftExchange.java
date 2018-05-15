@@ -39,12 +39,8 @@ import static org.eclipse.sw360.datahandler.thrift.AddDocumentRequestStatus.SUCC
  */
 public class ThriftExchange {
 
-    private static final Logger logger = Logger.getLogger(ThriftExchange.class);
+    private static final Logger LOGGER = Logger.getLogger(ThriftExchange.class);
     private final ThriftApi thriftApi = new ThriftApiSimple();
-
-
-
-
 
     /**
      * Add the Project to DB. Required fields are: name.
@@ -63,7 +59,7 @@ public class ThriftExchange {
                 logFailedAddDocument(summary.getRequestStatus(), "project");
             }
         } catch (TException e) {
-            logger.error("Could not add Project for user with email=[" + user.getEmail() + "]:" + e);
+            LOGGER.error("Could not add Project for user with email=[" + user.getEmail() + "]:" + e);
         }
         return projectId;
     }
@@ -85,7 +81,7 @@ public class ThriftExchange {
                 logFailedAddDocument(summary.getRequestStatus(), "component");
             }
         } catch (TException e) {
-            logger.error("Could not add Component for user with email=[" + user.getEmail() + "]:" + e);
+            LOGGER.error("Could not add Component for user with email=[" + user.getEmail() + "]:" + e);
         }
         return componentId;
     }
@@ -107,7 +103,7 @@ public class ThriftExchange {
                 logFailedAddDocument(summary.getRequestStatus(), "release");
             }
         } catch (TException e) {
-            logger.error("Could not add Release for user with email=[" + user.getEmail() + "]:" + e);
+            LOGGER.error("Could not add Release for user with email=[" + user.getEmail() + "]:" + e);
         }
         return releaseId;
     }
@@ -124,7 +120,7 @@ public class ThriftExchange {
         try {
             licenses = thriftApi.getLicenseClient().addLicenses(Collections.singletonList(license), user);
         } catch (TException e) {
-            logger.error("Could not add License for user with email=[" + user.getEmail() + "]:" + e);
+            LOGGER.error("Could not add License for user with email=[" + user.getEmail() + "]:" + e);
         }
         return licenses == null ? null : licenses.get(0).getId();
     }
@@ -145,14 +141,12 @@ public class ThriftExchange {
         return thriftApi.getComponentClient();
     }
 
-
-
     public Optional<List<Release>> searchReleaseByNameAndVersion(String name, String version) {
         List<Release> releases = null;
         try {
             releases = thriftApi.getComponentClient().searchReleaseByNamePrefix(name);
         } catch (TException e) {
-            logger.error("Could not fetch Release list for name=[" + name + "], version=[" + version + "]:" + e);
+            LOGGER.error("Could not fetch Release list for name=[" + name + "], version=[" + version + "]:" + e);
         }
 
         if (releases != null) {
@@ -168,7 +162,7 @@ public class ThriftExchange {
         try {
             return Optional.of(thriftApi.getComponentClient().searchComponentForExport(name));
         } catch (TException e) {
-            logger.error("Could not fetch Component list for name=[" + name + "]:" + e);
+            LOGGER.error("Could not fetch Component list for name=[" + name + "]:" + e);
             return Optional.empty();
         }
     }
@@ -180,15 +174,15 @@ public class ThriftExchange {
         );
     }
 
-    boolean doesProjectAlreadyExists(String wsProjectId, String wsProjectName, User user) throws TException {
+    boolean doesProjectAlreadyExists(int wsProjectId, String wsProjectName, User user) throws TException {
         List<Project> accessibleProjects = getAccessibleProjectsSummary(user);
 
         if (hasAccessibleProjectWithWsToken(wsProjectId, accessibleProjects)) {
-            logger.info("Project to import was already imported with wsId: " + wsProjectId);
+            LOGGER.info("Project to import was already imported with wsId: " + wsProjectId);
             return true;
         }
         if (hasAccessibleProjectWithWsName(wsProjectName, accessibleProjects)) {
-            logger.info("Project to import already exists in the DB with name: " + wsProjectName);
+            LOGGER.info("Project to import already exists in the DB with name: " + wsProjectName);
             return true;
         }
         return false;
@@ -196,9 +190,9 @@ public class ThriftExchange {
 
     private void logFailedAddDocument(AddDocumentRequestStatus status, String documentTypeString) {
         if (DUPLICATE.equals(status)) {
-            logger.error("Could not add duplicate " + documentTypeString + ".");
+            LOGGER.error("Could not add duplicate " + documentTypeString + ".");
         } else {
-            logger.error("Adding the " + documentTypeString + "failed.");
+            LOGGER.error("Adding the " + documentTypeString + "failed.");
         }
     }
 
@@ -210,7 +204,7 @@ public class ThriftExchange {
                     .filter(filter)
                     .collect(Collectors.toList()));
         } catch (TException e) {
-            logger.error("Could not fetch License list for " + selector + ": " + e);
+            LOGGER.error("Could not fetch License list for " + selector + ": " + e);
             return Optional.empty();
         }
     }
@@ -220,15 +214,15 @@ public class ThriftExchange {
         try {
             accessibleProjectsSummary = getProjectClient().getAccessibleProjectsSummary(user);
         } catch (TException e) {
-            logger.error("Could not fetch Project list for user with email=[" + user.getEmail() + "]:" + e);
+            LOGGER.error("Could not fetch Project list for user with email=[" + user.getEmail() + "]:" + e);
         }
         return nullToEmptyList(accessibleProjectsSummary);
     }
 
-    private boolean hasAccessibleProjectWithWsToken(String wsProjectId, List<Project> accessibleProjects) throws TException {
+    private boolean hasAccessibleProjectWithWsToken(int wsProjectId, List<Project> accessibleProjects) throws TException {
         return accessibleProjects.stream()
                 .filter(Project::isSetExternalIds)
-                .anyMatch(project -> wsProjectId.equals(project.getExternalIds().get(TranslationConstants.WS_ID)));
+                .anyMatch(project -> Integer.toString(wsProjectId).equals(project.getExternalIds().get(TranslationConstants.WS_ID)));
     }
 
     private boolean hasAccessibleProjectWithWsName(String wsProjectName, List<Project> accessibleProjects) throws TException {

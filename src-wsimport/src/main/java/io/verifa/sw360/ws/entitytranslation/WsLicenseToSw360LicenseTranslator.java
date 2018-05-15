@@ -14,6 +14,7 @@ package io.verifa.sw360.ws.entitytranslation;
 
 import io.verifa.sw360.ws.domain.WsLicense;
 import io.verifa.sw360.ws.utility.TranslationConstants;
+import org.eclipse.sw360.datahandler.thrift.licenses.License;
 
 import java.util.HashMap;
 
@@ -22,18 +23,15 @@ import java.util.HashMap;
  */
 public class WsLicenseToSw360LicenseTranslator implements EntityTranslator<WsLicense, org.eclipse.sw360.datahandler.thrift.licenses.License> {
 
-
-
     @Override
-    public org.eclipse.sw360.datahandler.thrift.licenses.License apply(WsLicense wslicense) {
-        org.eclipse.sw360.datahandler.thrift.licenses.License licenseSW360 = new org.eclipse.sw360.datahandler.thrift.licenses.License();
-
+    public License apply(WsLicense wsLicense) {
+        License licenseSW360 = new License();
         licenseSW360.setExternalIds(new HashMap<>());
-        licenseSW360.setId(wslicense.getName());
-        licenseSW360.setShortname(wslicense.getName());
-        licenseSW360.getExternalIds().put(TranslationConstants.WS_ID, wslicense.getName());
-        licenseSW360.setFullname(wslicense.getName());
-        licenseSW360.setExternalLicenseLink(wslicense.getUrl());
+        licenseSW360.setId(wsLicense.getName().replaceAll("\\s","-"));
+        licenseSW360.setShortname(wsLicense.getName().replaceAll("\\s","-"));
+        licenseSW360.getExternalIds().put(TranslationConstants.WS_ID, wsLicense.getName());
+        licenseSW360.setFullname(wsLicense.getName());
+        licenseSW360.setExternalLicenseLink(wsLicense.getUrl());
 
         return licenseSW360;
     }

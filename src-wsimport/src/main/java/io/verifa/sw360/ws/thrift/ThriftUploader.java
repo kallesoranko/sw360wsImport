@@ -85,7 +85,7 @@ public class ThriftUploader {
             return new ProjectImportResult(ProjectImportError.PROJECT_NOT_FOUND);
         }
 
-        if (thriftExchange.doesProjectAlreadyExists(wsProject.getProjectToken(), wsProject.getProjectName(), user)) {
+        if (thriftExchange.doesProjectAlreadyExists(wsProject.getId(), wsProject.getProjectName(), user)) {
             LOGGER.error("Project already in database: " + wsProject.getProjectName());
             return new ProjectImportResult(ProjectImportError.PROJECT_ALREADY_EXISTS);
         }
@@ -93,7 +93,6 @@ public class ThriftUploader {
         Project projectSW360 = projectToProjectTranslator.apply(wsProject);
         Set<ReleaseRelation> releases = createReleases(wsProject, user);
         projectSW360.setProjectResponsible(user.getEmail());
-        projectSW360.setDescription("Imported from Whitesource with id: " + wsProject.getId());
         projectSW360.setReleaseIdToUsage(releases.stream()
                 .collect(Collectors.toMap(ReleaseRelation::getReleaseId, ReleaseRelation::getProjectReleaseRelationship)));
 
@@ -149,7 +148,7 @@ public class ThriftUploader {
         }
     }
 
-    private String getOrCreateComponent(io.verifa.sw360.ws.domain.WsLibrary wsLibrary, User sw360user) {
+    private String getOrCreateComponent(WsLibrary wsLibrary, User sw360user) {
         LOGGER.info("Try to import whitesource Library: " + wsLibrary.getName() + ", version: " + wsLibrary.getVersion());
 
         String componentVersion = isNullOrEmpty(wsLibrary.getVersion()) ? UNKNOWN : wsLibrary.getVersion();

@@ -31,21 +31,23 @@ public class WsLibraryToSw360ReleaseTranslator implements EntityTranslator<WsLib
     @Override
     public Release apply(WsLibrary wsLibrary) {
 
-        Release releaseSW360 = new Release();
-        releaseSW360.setExternalIds(new HashMap<>());
-        releaseSW360.setName(wsLibrary.getName());
-        releaseSW360.getExternalIds().put(TranslationConstants.WS_ID, Integer.toString(wsLibrary.getKeyId()));
+        Release sw360release = new Release();
+        sw360release.setExternalIds(new HashMap<>());
+        sw360release.setName(wsLibrary.getName());
+        sw360release.getExternalIds().put(TranslationConstants.WS_ID, Integer.toString(wsLibrary.getKeyId()));
+        sw360release.getExternalIds().put("Filename", wsLibrary.getFilename());
+        sw360release.setDownloadurl(wsLibrary.getReferences().getScmUrl());
 
         if (!isNullOrEmpty(wsLibrary.getVersion())) {
-            releaseSW360.setVersion(wsLibrary.getVersion());
+            sw360release.setVersion(wsLibrary.getVersion());
         } else {
-            releaseSW360.setVersion(UNKNOWN);
+            sw360release.setVersion(UNKNOWN);
         }
 
-        releaseSW360.setModerators(new HashSet<>());
-        releaseSW360.setClearingState(ClearingState.NEW_CLEARING);
+        sw360release.setModerators(new HashSet<>());
+        sw360release.setClearingState(ClearingState.NEW_CLEARING);
 
-        return releaseSW360;
+        return sw360release;
     }
 
 }

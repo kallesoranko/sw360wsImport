@@ -31,12 +31,12 @@ import static io.verifa.sw360.ws.utility.WsSettings.WS_REST_ENDPOINT;
 public class WsRestClient {
 
     private static final Logger LOGGER = Logger.getLogger(WsRestClient.class);
-    private static final String REST_URI = WS_REST_ENDPOINT;
 
     public WsRestClient() {
     }
 
     public String getData(String requestString, String token, WsType type) {
+        LOGGER.info("Making REST call to " + WS_REST_ENDPOINT + " with request: " + requestString + " and token: " + token);
         String result = null;
         String input = null;
         switch (type) {
@@ -52,7 +52,7 @@ public class WsRestClient {
         }
 
         HttpClient httpClient = HttpClientBuilder.create().build();
-        HttpPost request = new HttpPost(REST_URI);
+        HttpPost request = new HttpPost(WS_REST_ENDPOINT);
         request.addHeader(HttpHeaders.CONTENT_TYPE, "application/json");
         StringEntity in = new StringEntity(input, ContentType.create("application/json"));
         request.setEntity(in);

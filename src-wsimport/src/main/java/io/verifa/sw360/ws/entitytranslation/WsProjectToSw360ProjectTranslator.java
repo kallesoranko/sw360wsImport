@@ -31,6 +31,7 @@ public class WsProjectToSw360ProjectTranslator implements EntityTranslator<WsPro
         projectSW360.setDescription(wsProject.getProjectToken());
         projectSW360.setName(wsProject.getProjectName());
         projectSW360.setCreatedOn(wsProject.getCreationDate());
+        projectSW360.setDescription("Imported from Whitesource");
 
         return projectSW360;
     }

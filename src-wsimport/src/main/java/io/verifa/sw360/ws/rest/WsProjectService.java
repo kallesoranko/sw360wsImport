@@ -14,7 +14,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import io.verifa.sw360.ws.domain.WsLibrary;
 import io.verifa.sw360.ws.domain.WsProject;
-import io.verifa.sw360.ws.domain.WsProjectLicenses;
+import io.verifa.sw360.ws.domain.WsProjectLibs;
 import io.verifa.sw360.ws.domain.WsProjectVitals;
 import io.verifa.sw360.ws.utility.WsType;
 
@@ -41,13 +41,14 @@ public class WsProjectService {
     }
 
     public WsLibrary[] getProjectLicenses(String projectToken) {
-        String projectLicensesString = restClient.getData("getProjectLicenses", projectToken, WsType.PROJECT);
-        WsProjectLicenses wsProjectLicenses = null;
+        String projectLibsString = restClient.getData("getProjectLicenses", projectToken, WsType.PROJECT);
+        WsProjectLibs wsProjectLibs = null;
         try {
-            wsProjectLicenses = gson.fromJson(projectLicensesString, WsProjectLicenses.class);
+            wsProjectLibs = gson.fromJson(projectLibsString, WsProjectLibs.class);
         } catch (JsonSyntaxException jse) {
             jse.printStackTrace();
         }
-        return wsProjectLicenses.getLibraries();
+        return wsProjectLibs.getLibraries();
     }
+
 }

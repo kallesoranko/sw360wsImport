@@ -13,7 +13,7 @@ package io.verifa.sw360.ws.domain;
 /**
  * @author: ksoranko@verifa.io
  */
-public class WsProjectLicenses {
+public class WsProjectLibs {
 
     private WsLibrary[] libraries;
 

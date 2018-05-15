@@ -36,7 +36,7 @@ public class WsLibraryToSw360ReleaseTranslator implements EntityTranslator<WsLib
         sw360release.setName(wsLibrary.getName());
         sw360release.getExternalIds().put(TranslationConstants.WS_ID, Integer.toString(wsLibrary.getKeyId()));
         sw360release.getExternalIds().put("Filename", wsLibrary.getFilename());
-
+        
         if (wsLibrary.getReferences() != null) {
             sw360release.setDownloadurl(wsLibrary.getReferences().getScmUrl());
         }

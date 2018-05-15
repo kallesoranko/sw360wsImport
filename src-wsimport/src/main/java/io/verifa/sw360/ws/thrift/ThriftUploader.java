@@ -200,13 +200,14 @@ public class ThriftUploader {
     }
 
     private Set<ReleaseRelation> createReleases(WsProject wsProject, User user) {
-        io.verifa.sw360.ws.domain.WsLibrary[] libraries =  new WsProjectService().getProjectLicenses(wsProject.getProjectToken());
+        WsLibrary[] libraries =  new WsProjectService().getProjectLicenses(wsProject.getProjectToken());
         List<WsLibrary> libraryList = Arrays.asList(libraries);
+
         if (libraryList == null) {
             return ImmutableSet.of();
         }
 
-        Set<ReleaseRelation> releases = libraryList .stream()
+        Set<ReleaseRelation> releases = libraryList.stream()
                 .map(c -> createReleaseRelation(c, user))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());

@@ -78,5 +78,6 @@ public class WsLibrary {
     public void setLicenses(WsLicense[] licenses) {
         this.licenses = licenses;
     }
+
 }
 

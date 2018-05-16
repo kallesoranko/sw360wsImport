@@ -22,3 +22,12 @@ target
 *.iml
 
 /src-wsimport/src/main/resources/ws.properties
+
+.project
+.settings/
+src-wsimport/.classpath
+src-wsimport/.project
+src-wsimport/.settings/
+svc-wsimport/.classpath
+svc-wsimport/.project
+svc-wsimport/.settings/

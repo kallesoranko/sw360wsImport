@@ -1,3 +1,5 @@
+_This repository ie. the backend service of the wsimport is now merged with the main project, https://github.com/eclipse/sw360_
+
 # sw360wsImport
 
 This project is a subproject for sw360, https://github.com/eclipse/sw360. Project adds a feature to sw360 to import project data from WhiteSource using its REST API. This project contains only the backend service for the importing and fronend portlet is in the main project.

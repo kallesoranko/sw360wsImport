@@ -23,14 +23,17 @@ import java.util.HashMap;
  */
 public class WsLicenseToSw360LicenseTranslator implements EntityTranslator<WsLicense, org.eclipse.sw360.datahandler.thrift.licenses.License> {
 
-    @Override
+        @Override
     public License apply(WsLicense wsLicense) {
+        String license = wsLicense.getName().replaceFirst("Suspected ", "");
+        String licenseWithDashes = license.replaceAll("\\s","-");
+
         License licenseSW360 = new License();
+        licenseSW360.setId(licenseWithDashes);
         licenseSW360.setExternalIds(new HashMap<>());
-        licenseSW360.setId(wsLicense.getName().replaceAll("\\s","-"));
-        licenseSW360.setShortname(wsLicense.getName().replaceAll("\\s","-"));
         licenseSW360.getExternalIds().put(TranslationConstants.WS_ID, wsLicense.getName());
-        licenseSW360.setFullname(wsLicense.getName());
+        licenseSW360.setShortname(licenseWithDashes);
+        licenseSW360.setFullname(license);
         licenseSW360.setExternalLicenseLink(wsLicense.getUrl());
 
         return licenseSW360;
